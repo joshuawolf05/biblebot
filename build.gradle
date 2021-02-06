@@ -1,14 +1,25 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group 'ichs.stem'
 version '1.0-SNAPSHOT'
+mainClassName = 'stem.biblebot.BibleBot'
 
 repositories {
     mavenCentral()
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile 'com.google.api-client:google-api-client:1.30.4'
+    compile 'com.google.oauth-client:google-oauth-client-jetty:1.30.6'
+    compile 'com.google.apis:google-api-services-sheets:v4-rev581-1.25.0'
+
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.18.1'
 }
