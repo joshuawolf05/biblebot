@@ -14,16 +14,11 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.GeneralSecurityException;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class GoogleSpreadsheetScriptureExtracter extends Object {
+public class ScriptureExtractor {
     private static final String APPLICATION_NAME = "BibleBot";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
@@ -32,8 +27,10 @@ public class GoogleSpreadsheetScriptureExtracter extends Object {
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
-    private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
+    private static final List<String> SCOPES = List.of(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "credentials.json";
+
+    private static final String SPREADSHEET_ID = "1pHSzmMZ2_YsswUpIIamJKmiETjnKtk-NQxCgvn1UZ2c";
 
     /**
      * Creates an authorized Credential object.
@@ -44,7 +41,7 @@ public class GoogleSpreadsheetScriptureExtracter extends Object {
      */
     private static Credential getCredentials(final NetHttpTransport netHttpTransport) throws IOException {
         // Load client secrets.
-        InputStream in = GoogleSpreadsheetScriptureExtracter.class.getClassLoader().getResourceAsStream(CREDENTIALS_FILE_PATH);
+        InputStream in = ScriptureExtractor.class.getClassLoader().getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
@@ -53,7 +50,7 @@ public class GoogleSpreadsheetScriptureExtracter extends Object {
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 netHttpTransport, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
@@ -62,14 +59,13 @@ public class GoogleSpreadsheetScriptureExtracter extends Object {
 
     public List<Scripture> extractScriptures() throws Exception {
         // Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        final String spreadsheetId = "1pHSzmMZ2_YsswUpIIamJKmiETjnKtk-NQxCgvn1UZ2c";
-        final String range = "Verses!A1:C";
+        NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        String range = "Verses!A1:C";
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         ValueRange response = service.spreadsheets().values()
-                .get(spreadsheetId, range)
+                .get(SPREADSHEET_ID, range)
                 .execute();
         List<List<Object>> rows = response.getValues();
         if (rows == null || rows.isEmpty()) {
@@ -77,8 +73,7 @@ public class GoogleSpreadsheetScriptureExtracter extends Object {
         }
 
         List<Scripture> scriptures = new ArrayList<>();
-        for (List row : rows) {
-            // Print columns A and E, which correspond to indices 0 and 4.
+        for (List<Object> row : rows) {
             var reference = row.get(0).toString();
             var topic = row.get(1).toString();
             var text = row.get(2).toString();
@@ -87,6 +82,7 @@ public class GoogleSpreadsheetScriptureExtracter extends Object {
             scripture.setTextReference(reference);
             scripture.setTopic(topic);
             scripture.setText(text);
+
             scriptures.add(scripture);
         }
         return scriptures;

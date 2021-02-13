@@ -41,6 +41,10 @@ public class Scripture {
         this.text = text;
     }
 
+    public String asTweet() {
+        return textReference + " \"" + text + "\" #ICHS #STEMProject #" + topic;
+    }
+
     @Override
     public String toString() {
         return "\"" + text + "\" " + textReference + " (" + topic + ")";

@@ -7,20 +7,20 @@ public class BibleBot {
     private static final int MAX_TWEET_LENGTH = 280;
 
     public static void main(String... args) throws Exception {
-        var extractor = new GoogleSpreadsheetScriptureExtracter();
+        var extractor = new ScriptureExtractor();
         List<Scripture> scriptures = extractor.extractScriptures();
 //        scriptures.forEach(System.out::println);
-
+        int countOfNotTweetable = 0;
         for (Scripture s : scriptures) {
-            int lengthOfText = s.getText().length();
+            int lengthOfText = s.asTweet().length();
             boolean isTweetable = lengthOfText <= MAX_TWEET_LENGTH;
-            if (isTweetable) {
-                // do this if true
-                System.out.println("the scripture " + s.getTextReference() + " is tweetable");
-            } else {
-                // do this if false
+
+            if (!isTweetable) {
                 System.out.println("the scripture " + s.getTextReference() + " is NOT tweetable");
+                countOfNotTweetable = countOfNotTweetable + 1;
             }
+
         }
+        System.out.println("there are " + countOfNotTweetable + " NOT tweetable scriptures");
     }
 }
